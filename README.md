@@ -5,10 +5,9 @@ The details can be found in the following paper:
 
 *LDMol: Text-Conditioned Molecule Diffusion Model Leveraging Chemically Informative Latent Space. ([arxiv 2024](https://arxiv.org/abs/2405.17829))*
 
+![ldmol_fig2](https://github.com/jinhojsk515/LDMol/assets/59189526/1a172fed-39ab-44a6-848b-1740c7b37df4)
 
 ***
-
-![ldmol_fig2](https://github.com/jinhojsk515/LDMol/assets/59189526/1a172fed-39ab-44a6-848b-1740c7b37df4)
 
 ![ldmol_fig3](https://github.com/jinhojsk515/LDMol/assets/59189526/8e590298-eb8a-4c38-bf84-22bcc0208ac4)
 
