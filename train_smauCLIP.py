@@ -157,7 +157,7 @@ class smauCLIP(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
-        print('qqq', metric)
+        raise NotImplementedError
 
     def training_step(self, train_batch, batch_idx):
         optimizer = self.optimizers()
