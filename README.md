@@ -12,7 +12,7 @@ The details can be found in the following paper:
 
 ![ldmol_fig3](https://github.com/jinhojsk515/LDMol/assets/59189526/8e590298-eb8a-4c38-bf84-22bcc0208ac4)
 
-Molecule structure will be given in SMILES, and we used 53 simple chemical properties to build a property vector(PV) of a molecule.
+LDMol not only can generate molecules according to the given text prompt, but it's also able to perform various downstream tasks including molecule-to-text retrieval and text-guided molecule editing.
 
 ***<ins>The model checkpoint and data are too heavy to be included in this repo and will be separately uploaded soon.<ins>***
 
