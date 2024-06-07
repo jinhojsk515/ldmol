@@ -22,7 +22,7 @@ class AttrDict(dict):
         self.__dict__ = self
 
 
-class smauCLIP(pl.LightningModule):
+class ldmol_autoencoder(pl.LightningModule):
     def __init__(self, cp=None, config=None, loader_len=0, no_train=False, tokenizer=None, use_linear=True, use_pr=False):
         super().__init__()
         self.save_hyperparameters()
@@ -145,7 +145,7 @@ def main(args, config):
 
     # model
     print("Creating model")
-    model = smauCLIP(config=config, cp=args.enc_checkpoint, tokenizer=tokenizer, use_linear=True)
+    model = ldmol_autoencoder(config=config, cp=args.enc_checkpoint, tokenizer=tokenizer, use_linear=True)
     print('#parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
 
     if args.checkpoint:
@@ -183,7 +183,7 @@ def main(args, config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--checkpoint', default='')
-    parser.add_argument('--enc_checkpoint', default='./Pretrain/checkpoint_smauCLIP_sc.ckpt')
+    parser.add_argument('--enc_checkpoint', default='./Pretrain/checkpoint_encoder.ckpt')
     parser.add_argument('--data_path', default='./data/pubchem_10m.txt')
     parser.add_argument('--resume', default=False, type=bool)
     parser.add_argument('--output_dir', default='./Pretrain')

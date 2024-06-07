@@ -24,7 +24,7 @@ class AttrDict(dict):
         self.__dict__ = self
 
 
-class smauCLIP(pl.LightningModule):
+class ldmol_encoder(pl.LightningModule):
     def __init__(self, tokenizer=None, config=None, loader_len=0, no_train=False):
         super().__init__()
         self.save_hyperparameters()
@@ -157,7 +157,7 @@ class smauCLIP(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def lr_scheduler_step(self, scheduler, optimizer_idx, metric):
-        raise NotImplementedError
+        print('qqq', metric)
 
     def training_step(self, train_batch, batch_idx):
         optimizer = self.optimizers()
@@ -238,7 +238,7 @@ def main(args, config):
     # model
     print("Creating model")
     ngpu=1
-    model = smauCLIP(config=config, tokenizer=tokenizer, loader_len=len(data_loader) // ngpu)
+    model = ldmol_encoder(config=config, tokenizer=tokenizer, loader_len=len(data_loader) // ngpu)
     print('#parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
 
     if args.checkpoint:
@@ -276,7 +276,7 @@ def evaluate(args, config):
     # model
     print("Creating model")
     ngpu = 1
-    model = smauCLIP(config=config, tokenizer=tokenizer, loader_len=len(data_loader) // ngpu)
+    model = ldmol_encoder(config=config, tokenizer=tokenizer, loader_len=len(data_loader) // ngpu)
     print('#parameters:', sum(p.numel() for p in model.parameters() if p.requires_grad))
     if args.checkpoint:
         checkpoint = torch.load(args.checkpoint, map_location='cpu')

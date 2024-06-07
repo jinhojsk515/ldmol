@@ -28,9 +28,9 @@ from models import DiT_models
 from diffusion import create_diffusion
 
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
-from train_smauCLIP_dec import smauCLIP
+from train_autoencoder import ldmol_autoencoder
 from utils import molT5_encoder, SPMM_SMILES_encoder
-from dataset import chebi20_dataset
+from dataset import smi_txt_dataset
 import random
 
 #################################################################################
@@ -154,8 +154,7 @@ def main(args):
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = smauCLIP(config=spmm_config, no_train=True, tokenizer=tokenizer, use_linear=True)
-    # spmm = smauCLIP(config=spmm_config, no_train=True, tokenizer=tokenizer)
+    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer, use_linear=True)
     if args.vae:
         print('LOADING PRETRAINED MODEL..', args.vae)
         checkpoint = torch.load(args.vae, map_location='cpu')
@@ -187,7 +186,7 @@ def main(args):
 
 
     # Setup data:
-    dataset = chebi20_dataset([
+    dataset = smi_txt_dataset([
         './data/chebi_20/train_parsed.txt',
         './data/PubchemSTM/train_parsed.txt',
         './data/PCdes/train_parsed.txt'
@@ -298,7 +297,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=1400)
     parser.add_argument("--global-batch-size", type=int, default=16*6)
     parser.add_argument("--global-seed", type=int, default=0)
-    parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_smauCLIP_dec_64_sc_972.ckpt")  # Choice doesn't affect training
+    parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_autoencoder.ckpt")  # Choice doesn't affect training
     parser.add_argument("--num-workers", type=int, default=16)
     parser.add_argument("--log-every", type=int, default=100)
     parser.add_argument("--ckpt-every", type=int, default=10000)

@@ -20,10 +20,10 @@ from tqdm import tqdm
 import argparse
 from einops import repeat
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
-from train_smauCLIP_dec import smauCLIP
+from train_autoencoder import ldmol_autoencoder
 from utils import SPMM_decoder, molT5_encoder
 import time
-from dataset import chebi20_dataset
+from dataset import smi_txt_dataset
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 from metrics import molfinger_evaluate, mol_evaluate
@@ -80,7 +80,7 @@ def main(args):
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = smauCLIP(config=spmm_config, no_train=True, tokenizer=tokenizer, use_linear=True)
+    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer, use_linear=True)
     if args.vae:
         checkpoint = torch.load(args.vae, map_location='cpu')
         try:
@@ -118,7 +118,7 @@ def main(args):
     biot5_embed_null = biot5_embed_null.to(device).to(torch.float32)
     mask_null = mask_null.to(device).bool()
 
-    test_dataset = chebi20_dataset(['./data/chebi_20/test_parsed.txt'], data_length=None, shuffle=False, unconditional=False, raw_description=True)
+    test_dataset = smi_txt_dataset(['./data/chebi_20/test_parsed.txt'], data_length=None, shuffle=False, unconditional=False, raw_description=True)
     if rank == 0:   print('#data:', len(test_dataset))
 
     sampler = DistributedSampler(
@@ -225,7 +225,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="LDMol")
-    parser.add_argument("--vae", type=str, default="../CLDM/Pretrain/checkpoint_smauCLIP_dec_64_sc_972.ckpt")  # Choice doesn't affect training
+    parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_autoencoder.ckpt")  # Choice doesn't affect training
     parser.add_argument("--text-encoder-name", type=str, default="molt5")
     parser.add_argument("--description-length", type=int, default=256)
     parser.add_argument("--per-proc-batch-size", type=int, default=64)

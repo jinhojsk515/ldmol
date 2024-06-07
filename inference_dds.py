@@ -18,7 +18,7 @@ from download import find_model
 from diffusion import create_diffusion
 import argparse
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
-from train_smauCLIP_dec import smauCLIP
+from train_autoencoder import ldmol_autoencoder
 from utils import SPMM_decoder, molT5_encoder, SPMM_SMILES_encoder
 from rdkit import Chem
 import time
@@ -64,17 +64,15 @@ def main(args):
     msg = model.load_state_dict(state_dict, strict=False)
     if rank == 0:   print('DiT from ', ckpt_path, msg)
     model.eval()  # important!
-    diffusion = create_diffusion(str(args.num_sampling_steps))
 
     spmm_config = {
-        'bert_config_text': './config_bert2.json',
-        'bert_config_smiles': './config_bert_smiles.json',
-        'bert_config_smauclip': './config_bert_smauclip.json',
+        'bert_config_decoder': './config_decoder.json',
+        'bert_config_encoder': './config_encoder.json',
         'embed_dim': 256,
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = smauCLIP(config=spmm_config, no_train=True, tokenizer=tokenizer)
+    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer)
     if args.vae:
         checkpoint = torch.load(args.vae, map_location='cpu')
         try:
@@ -201,11 +199,9 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="LDMol")
-    parser.add_argument("--vae", type=str, default="../CLDM/Pretrain/checkpoint_smauCLIP_dec_64_sc_972.ckpt")  # Choice doesn't affect training
+    parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_autoencoder.ckpt")  # Choice doesn't affect training
     parser.add_argument("--text-encoder-name", type=str, default="molt5")
     parser.add_argument("--description-length", type=int, default=256)
-    parser.add_argument("--per-proc-batch-size", type=int, default=64)
-    parser.add_argument("--num-sampling-steps", type=int, default=100)
     parser.add_argument("--global-seed", type=int, default=0)
     parser.add_argument("--tf32", action=argparse.BooleanOptionalAction, default=True,
                         help="By default, use TF32 matmuls. This massively accelerates sampling on Ampere GPUs.")

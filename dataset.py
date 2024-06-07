@@ -6,7 +6,7 @@ from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
 RDLogger.DisableLog('rdApp.*')
 
 
-class chebi20_dataset(Dataset):
+class smi_txt_dataset(Dataset):
     def __init__(self, data_path, data_length=None, shuffle=False, unconditional=False, raw_description=False):
         self.data = []
         for dp in data_path:
@@ -107,23 +107,6 @@ class SMILESDataset_pretrain(Dataset):
 
         # smiles = Chem.MolToSmiles(Chem.MolFromSmiles(self.data[index]), isomericSmiles=False, canonical=True)
         # return '[CLS]' + smiles
-
-
-class img_name_dataset(Dataset):
-    def __init__(self, data_path, data_length=None, shuffle=False):
-        self.data = [l.strip() for l in data_path]
-
-        if shuffle:
-            random.shuffle(self.data)
-
-        if data_length:
-            self.data = self.data[:data_length]
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, index):
-        return self.data[index]
 
 
 def sentence_randomize(description, only_one=False):

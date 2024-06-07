@@ -21,7 +21,7 @@ import math
 import argparse
 from einops import repeat
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
-from train_smauCLIP_dec import smauCLIP
+from train_autoencoder import ldmol_autoencoder
 from utils import SPMM_decoder, molT5_encoder, get_validity
 import time
 from rdkit import Chem
@@ -74,7 +74,7 @@ def main(args):
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = smauCLIP(config=spmm_config, no_train=True, tokenizer=tokenizer)
+    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer)
     if args.vae:
         print('LOADING PRETRAINED MODEL..', args.vae)
         checkpoint = torch.load(args.vae, map_location='cpu')
@@ -200,7 +200,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="LDMol")
-    parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_smauCLIP_dec_64_sc_972.ckpt")  # Choice doesn't affect training
+    parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_autoencoder.ckpt")  # Choice doesn't affect training
     parser.add_argument("--text-encoder-name", type=str, default="molt5")
     parser.add_argument("--prompt", type=str, default="This molecule contains an amino group.")
     parser.add_argument("--description-length", type=int, default=200)
