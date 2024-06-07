@@ -133,10 +133,6 @@ def mol_evaluate(targets, preds, verbose=False):
         try:
             m_out = Chem.MolFromSmiles(out)
             m_gt = Chem.MolFromSmiles(gt)
-
-            tmp1, tmp2 = Chem.MolToSmiles(Chem.MolFromSmiles(gt), canonical=False, isomericSmiles=True), Chem.MolToSmiles(Chem.MolFromSmiles(out), canonical=False, isomericSmiles=True)
-            #if Chem.MolToInchi(Chem.MolFromSmiles(tmp1)) == Chem.MolToInchi(Chem.MolFromSmiles(tmp2)) and Chem.MolToSmiles(m_out, canonical=True, isomericSmiles=True) != Chem.MolToSmiles(m_gt, canonical=True, isomericSmiles=True):
-                #print(Chem.MolToSmiles(m_out, canonical=True, isomericSmiles=True), Chem.MolToSmiles(m_gt, canonical=True, isomericSmiles=True))
             
             if Chem.MolToInchi(m_out) == Chem.MolToInchi(m_gt):
             #print(len(list(EnumerateStereoisomers(m_out))))
