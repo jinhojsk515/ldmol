@@ -22,5 +22,5 @@ Run `conda env create -f requirements.yaml` and it will generate a conda environ
 
 
 ## Acknowledgement
+* The code for DiT diffusion model is based on & modified from the official code of [DiT](https://github.com/facebookresearch/DiT).
 * The code for BERT with cross-attention layers `xbert.py` and schedulers are modified from the one in [ALBEF](https://github.com/salesforce/ALBEF).
-* The code for SMILES augmentation is taken from [pysmilesutils](https://github.com/MolecularAI/pysmilesutils).
