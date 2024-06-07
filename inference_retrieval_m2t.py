@@ -103,8 +103,7 @@ def main(args):
 
     dist.barrier()
 
-    # test_dataset = chebi20_dataset(['./data/PCdes/test.txt'], data_length=None, shuffle=True, unconditional=False, raw_description=True)
-    test_dataset = smi_txt_dataset(['./data/retrieval_test_custom.txt'], data_length=None, shuffle=True, unconditional=False, raw_description=True)
+    test_dataset = smi_txt_dataset([args.dataset], data_length=None, shuffle=True, unconditional=False, raw_description=True if args.level == 'paragraph' else False)
     test_dataset.data += test_dataset.data[:args.per_proc_batch_size - len(test_dataset.data) % args.per_proc_batch_size]
     if rank == 0:   print('#data:', len(test_dataset))
 
@@ -180,7 +179,7 @@ def main(args):
                 recall2.append(recall[i])
                 dup.append(s)
 
-        print('recall:', len(recall), len(recall2), torch.tensor(recall2).mean().item())
+        print('acc@64:', torch.tensor(recall2).mean().item())
     dist.destroy_process_group()
 
 
@@ -189,6 +188,8 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="LDMol")
     parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_autoencoder.ckpt")  # Choice doesn't affect training
     parser.add_argument("--text-encoder-name", type=str, default="molt5")
+    parser.add_argument("--dataset", type=str, default="./data/retrieval_test_custom.txt")      # './data/retrieval_test_custom.txt', './data/PCdes/test.txt'
+    parser.add_argument("--level", type=str, default="paragraph")      # paragraph, sentence
     parser.add_argument("--description-length", type=int, default=256)
     parser.add_argument("--n-iter", type=int, default=10)
     parser.add_argument("--per-proc-batch-size", type=int, default=64)
