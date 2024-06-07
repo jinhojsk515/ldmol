@@ -105,28 +105,27 @@ def main(args):
 
     diffusion = create_diffusion(timestep_respacing="")  # default: 1000 steps, linear noise schedule
     st = time.time()
-   
-    #x_smiles = 'c1cncnc1CCC'
-    #y_s = ['This molecule has a pyrimidine ring.']
-    #y_t = ['This molecule has a pyrimidine ring and acetyl group.']
- 
-    #x_smiles = 'C[C@H](CCc1ccccc1)Nc1ccc(C#N)cc1F'
-    #y_s = ['This molecule contains fluorine.']
-    #y_t = ['This molecule contains bromine.']
 
-    #x_smiles = 'CC(=O)OC1=CC=CC=C1C(=O)O'
-    x_smiles = 'CC(C)CC1=CC=CC=C1C(=O)O'
-    y_s = ['This molecule is carboxylic acid.']
-    y_t = ['This molecule is ester.']
-    
-    #x_smiles = 'C1(CCCCC1)CNC'
-    #y_s = ['This molecule has cyclohexane ring.']
-    #y_t = ['This molecule has benzene ring.']
+    x_smiles = args.input_smiles
+    y_s = args.source_text
+    y_t = args.target_text
+
+    # x_smiles = 'c1cncnc1CCC'
+    # y_s = ['This molecule has a pyrimidine ring.']
+    # y_t = ['This molecule has a pyrimidine ring and acetyl group.']
+ 
+    # x_smiles = 'C[C@H](CCc1ccccc1)Nc1ccc(C#N)cc1F'
+    # y_s = ['This molecule contains fluorine.']
+    # y_t = ['This molecule contains bromine.']
+
+    # x_smiles = 'CC(C)CC1=CC=CC=C1C(=O)O'
+    # y_s = ['This molecule is carboxylic acid.']
+    # y_t = ['This molecule is ester.']
 
     x_smiles = Chem.MolToSmiles(Chem.MolFromSmiles(x_smiles), isomericSmiles=True, canonical=True)
     loss_scale = 0.4
     n_iter = 200
-    cfg = 2
+    cfg = 2.
     print(x_smiles, ':', y_s[0], '=>', y_t[0])
 
     # Sample inputs:
@@ -200,6 +199,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, choices=list(DiT_models.keys()), default="LDMol")
     parser.add_argument("--vae", type=str, default="./Pretrain/checkpoint_autoencoder.ckpt")  # Choice doesn't affect training
+    parser.add_argument("--input-smiles", type=str, default="C[C@H](CCc1ccccc1)Nc1ccc(C#N)cc1F")
+    parser.add_argument("--source-text", type=str, default="This molecule contains fluorine.")
+    parser.add_argument("--target-text", type=str, default="This molecule contains bromine.")
     parser.add_argument("--text-encoder-name", type=str, default="molt5")
     parser.add_argument("--description-length", type=int, default=256)
     parser.add_argument("--global-seed", type=int, default=0)
