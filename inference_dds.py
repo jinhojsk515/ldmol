@@ -86,10 +86,6 @@ def main(args):
     spmm = spmm.to(device)
     spmm.eval()
     if rank == 0:   print(f'spmm #parameters: {sum(p.numel() for p in spmm.parameters())}, #trainable: {sum(p.numel() for p in spmm.parameters() if p.requires_grad)}')
-    # vae = AutoencoderKL.from_pretrained(f"stabilityai/sd-vae-ft-{args.vae}").to(device)
-
-    assert args.cfg_scale >= 1.0, "In almost all cases, cfg_scale be >= 1.0"
-    using_cfg = args.cfg_scale > 1.0
 
     text_encoder = T5ForConditionalGeneration.from_pretrained('laituan245/molt5-large-caption2smiles').to(device)
     text_tokenizer = T5Tokenizer.from_pretrained("laituan245/molt5-large-caption2smiles", model_max_length=512)
@@ -107,8 +103,8 @@ def main(args):
     st = time.time()
 
     x_smiles = args.input_smiles
-    y_s = args.source_text
-    y_t = args.target_text
+    y_s = [args.source_text]
+    y_t = [args.target_text]
 
     # x_smiles = 'c1cncnc1CCC'
     # y_s = ['This molecule has a pyrimidine ring.']
