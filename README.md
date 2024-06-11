@@ -1,6 +1,6 @@
 # LDMol
 
-GitHub repository for LDMol, a latent text-to-molecule diffusion model.
+Official GitHub repository for LDMol, a latent text-to-molecule diffusion model.
 The details can be found in the following paper: 
 
 *LDMol: Text-Conditioned Molecule Diffusion Model Leveraging Chemically Informative Latent Space. ([arxiv 2024](https://arxiv.org/abs/2405.17829))*
