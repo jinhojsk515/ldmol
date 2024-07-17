@@ -9,20 +9,20 @@ RDLogger.DisableLog('rdApp.*')
 
 
 @torch.no_grad()
-def SPMM_SMILES_encoder(sm, spmm):
+def AE_SMILES_encoder(sm, ae_model):
     if sm[0][:5] != "[CLS]":
         sm = ["[CLS]"+s for s in sm]
-    text_input = spmm.tokenizer(sm, padding='max_length', truncation=True, max_length=128, return_tensors="pt").to(spmm.device)
+    text_input = ae_model.tokenizer(sm, padding='max_length', truncation=True, max_length=128, return_tensors="pt").to(ae_model.device)
     text_input_ids = text_input['input_ids'][:, 1:]
     text_attention_mask = text_input['attention_mask'][:, 1:]
-    if hasattr(spmm.text_encoder2, 'bert'):
-        output = spmm.text_encoder2.bert(text_input_ids, attention_mask=text_attention_mask, return_dict=True, mode='text').last_hidden_state
+    if hasattr(ae_model.text_encoder2, 'bert'):
+        output = ae_model.text_encoder2.bert(text_input_ids, attention_mask=text_attention_mask, return_dict=True, mode='text').last_hidden_state
     else:
-        output = spmm.text_encoder2(text_input_ids, attention_mask=text_attention_mask, return_dict=True).last_hidden_state
+        output = ae_model.text_encoder2(text_input_ids, attention_mask=text_attention_mask, return_dict=True).last_hidden_state
 
-    if hasattr(spmm, 'encode_prefix'):
-        output = spmm.encode_prefix(output)
-        if spmm.output_dim*2 == output.size(-1): 
+    if hasattr(ae_model, 'encode_prefix'):
+        output = ae_model.encode_prefix(output)
+        if ae_model.output_dim*2 == output.size(-1):
             mean, logvar = torch.chunk(output, 2, dim=-1)
             logvar = torch.clamp(logvar, -30.0, 20.0)
             std = torch.exp(0.5 * logvar)
@@ -60,7 +60,7 @@ def generate(model, image_embeds, text, stochastic=True, prop_att_mask=None, k=N
 
 
 @torch.no_grad()
-def SPMM_decoder(pv, model, stochastic=False, k=2, max_length=150):
+def AE_SMILES_decoder(pv, model, stochastic=False, k=2, max_length=150):
     if hasattr(model, 'decode_prefix'):
         pv = model.decode_prefix(pv)
 

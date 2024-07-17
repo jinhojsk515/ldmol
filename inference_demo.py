@@ -22,7 +22,7 @@ import argparse
 from einops import repeat
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import SPMM_decoder, molT5_encoder, get_validity
+from utils import AE_SMILES_decoder, molT5_encoder, get_validity
 import time
 from rdkit import Chem
 
@@ -67,14 +67,14 @@ def main(args):
     model.eval()  # important!
     diffusion = create_diffusion(str(args.num_sampling_steps))
 
-    spmm_config = {
+    ae_config = {
         'bert_config_decoder': './config_decoder.json',
         'bert_config_encoder': './config_encoder.json',
         'embed_dim': 256,
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer)
+    ae_model = ldmol_autoencoder(config=ae_config, no_train=True, tokenizer=tokenizer)
     if args.vae:
         print('LOADING PRETRAINED MODEL..', args.vae)
         checkpoint = torch.load(args.vae, map_location='cpu')
@@ -82,17 +82,17 @@ def main(args):
             state_dict = checkpoint['model']
         except:
             state_dict = checkpoint['state_dict']
-        msg = spmm.load_state_dict(state_dict, strict=False)
-        print('spmm', msg)
-    for param in spmm.parameters():
+        msg = ae_model.load_state_dict(state_dict, strict=False)
+        print('autoencoder', msg)
+    for param in ae_model.parameters():
         param.requires_grad = False
-    del spmm.text_encoder2
-    spmm = spmm.to(device)
-    spmm.eval()
-    print(f'spmm #parameters: {sum(p.numel() for p in spmm.parameters())}, #trainable: {sum(p.numel() for p in spmm.parameters() if p.requires_grad)}')
+    del ae_model.text_encoder2
+    ae_model = ae_model.to(device)
+    ae_model.eval()
+    print(f'AE #parameters: {sum(p.numel() for p in ae_model.parameters())}, #trainable: {sum(p.numel() for p in ae_model.parameters() if p.requires_grad)}')
 
-    assert args.cfg_scale >= 1.0, "In almost all cases, cfg_scale be >= 1.0"
-    using_cfg = args.cfg_scale > 1.0
+    # assert args.cfg_scale >= 1.0, "In almost all cases, cfg_scale be >= 1.0"
+    using_cfg = args.cfg_scale != 1.0
 
     text_encoder = T5ForConditionalGeneration.from_pretrained('laituan245/molt5-large-caption2smiles').to(device)
     text_tokenizer = T5Tokenizer.from_pretrained("laituan245/molt5-large-caption2smiles", model_max_length=512)
@@ -160,9 +160,10 @@ def main(args):
         )
         if using_cfg:
             samples, _ = samples.chunk(2, dim=0)  # Remove null class samples
+        # print('zzzz', samples.shape)
 
         samples = samples.squeeze(-1).permute((0, 2, 1))
-        samples = SPMM_decoder(samples, spmm, stochastic=False, k=1)
+        samples = AE_SMILES_decoder(samples, ae_model     , stochastic=False, k=1)
 
         # Save samples to disk as individual .png files
         with open('./generated_molecules.txt', 'a') as f:
@@ -205,7 +206,7 @@ if __name__ == "__main__":
     parser.add_argument("--prompt", type=str, default="This molecule contains an amino group.")
     parser.add_argument("--description-length", type=int, default=200)
     parser.add_argument("--num-samples", type=int, default=100)
-    parser.add_argument("--per-proc-batch-size", type=int, default=50)
+    parser.add_argument("--per-proc-batch-size", type=int, default=10)
     parser.add_argument("--cfg-scale",  type=float, default=5.)
     parser.add_argument("--num-sampling-steps", type=int, default=100)
     parser.add_argument("--global-seed", type=int, default=0)

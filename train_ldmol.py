@@ -29,7 +29,7 @@ from diffusion import create_diffusion
 
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import molT5_encoder, SPMM_SMILES_encoder
+from utils import molT5_encoder, AE_SMILES_encoder
 from dataset import smi_txt_dataset
 import random
 
@@ -147,14 +147,14 @@ def main(args):
     diffusion = create_diffusion(timestep_respacing="")  # default: 1000 steps, linear noise schedule
 
     
-    spmm_config = {
+    ae_config = {
         'bert_config_decoder': './config_decoder.json',
         'bert_config_encoder': './config_encoder.json',
         'embed_dim': 256,
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer, use_linear=True)
+    ae_model = ldmol_autoencoder(config=ae_config, no_train=True, tokenizer=tokenizer, use_linear=True)
     if args.vae:
         print('LOADING PRETRAINED MODEL..', args.vae)
         checkpoint = torch.load(args.vae, map_location='cpu')
@@ -162,14 +162,14 @@ def main(args):
             state_dict = checkpoint['model']
         except:
             state_dict = checkpoint['state_dict']
-        msg = spmm.load_state_dict(state_dict, strict=False)
-        print('spmm', msg)
-    for param in spmm.parameters():
+        msg = ae_model.load_state_dict(state_dict, strict=False)
+        print('autoencoder', msg)
+    for param in ae_model.parameters():
         param.requires_grad = False
-    del spmm.text_encoder
-    spmm = spmm.to(device)
-    spmm.eval()
-    print(f'spmm #parameters: {sum(p.numel() for p in spmm.parameters())}, #trainable: {sum(p.numel() for p in spmm.parameters() if p.requires_grad)}')
+    del ae_model.text_encoder
+    ae_model = ae_model.to(device)
+    ae_model.eval()
+    print(f'AE #parameters: {sum(p.numel() for p in ae_model.parameters())}, #trainable: {sum(p.numel() for p in ae_model.parameters() if p.requires_grad)}')
 
     logger.info(f"DiT Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
@@ -230,7 +230,7 @@ def main(args):
         for x, y in loader:
             with torch.no_grad():
                 # Map input images to latent space + normalize latents:
-                x = SPMM_SMILES_encoder(x, spmm).permute((0, 2, 1)).unsqueeze(-1)
+                x = AE_SMILES_encoder(x, ae_model).permute((0, 2, 1)).unsqueeze(-1)
                 
                 y = [d if random.random() < 0.95 else dataset.null_text for d in y]
                 biot5_embed, pad_mask = molT5_encoder(y, text_encoder, text_tokenizer, args.description_length, device)

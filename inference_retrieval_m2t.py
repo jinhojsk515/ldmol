@@ -20,7 +20,7 @@ from tqdm import tqdm
 import argparse
 from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import molT5_encoder, SPMM_SMILES_encoder
+from utils import molT5_encoder, AE_SMILES_encoder
 import time
 from dataset import smi_txt_dataset
 from torch.utils.data import DataLoader
@@ -69,28 +69,28 @@ def main(args):
     model.eval()  # important!
     diffusion = create_diffusion(str(args.num_sampling_steps))
 
-    spmm_config = {
+    ae_config = {
         'bert_config_decoder': './config_decoder.json',
         'bert_config_encoder': './config_encoder.json',
         'embed_dim': 256,
     }
     tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
     tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
-    spmm = ldmol_autoencoder(config=spmm_config, no_train=True, tokenizer=tokenizer)
+    ae_model = ldmol_autoencoder(config=ae_config, no_train=True, tokenizer=tokenizer)
     if args.vae:
         checkpoint = torch.load(args.vae, map_location='cpu')
         try:
             state_dict = checkpoint['model']
         except:
             state_dict = checkpoint['state_dict']
-        msg = spmm.load_state_dict(state_dict, strict=False)
-        if rank == 0:   print('spmm', args.vae, msg)
-    for param in spmm.parameters():
+        msg = ae_model.load_state_dict(state_dict, strict=False)
+        if rank == 0:   print('autoencoder', args.vae, msg)
+    for param in ae_model.parameters():
         param.requires_grad = False
-    del spmm.text_encoder
-    spmm = spmm.to(device)
-    spmm.eval()
-    if rank == 0:   print(f'spmm #parameters: {sum(p.numel() for p in spmm.parameters())}, #trainable: {sum(p.numel() for p in spmm.parameters() if p.requires_grad)}')
+    del ae_model.text_encoder
+    ae_model = ae_model.to(device)
+    ae_model.eval()
+    if rank == 0:   print(f'E #parameters: {sum(p.numel() for p in ae_model.parameters())}, #trainable: {sum(p.numel() for p in ae_model.parameters() if p.requires_grad)}')
 
     text_encoder = T5ForConditionalGeneration.from_pretrained('laituan245/molt5-large-caption2smiles').to(device)
     text_tokenizer = T5Tokenizer.from_pretrained("laituan245/molt5-large-caption2smiles", model_max_length=512)
@@ -135,7 +135,7 @@ def main(args):
             pass
     for x_smiles, y in loader:
         # Sample inputs:
-        x = SPMM_SMILES_encoder(x_smiles, spmm).permute((0, 2, 1)).unsqueeze(-1)
+        x = AE_SMILES_encoder(x_smiles, ae_model).permute((0, 2, 1)).unsqueeze(-1)
         biot5_embed, pad_mask = molT5_encoder(y, text_encoder, text_tokenizer, args.description_length, device)
 
         y_cond = biot5_embed.to(device).type(torch.float32)
