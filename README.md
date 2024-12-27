@@ -30,7 +30,7 @@ __1. text-to-molecule generation__
        ```
    * benchmark dataset: The model performs text-to-molecule generation on ChEBI-20 test set. The evaluation metrics will be printed at the end.
        ```
-       TOKENIZERS_PARALLELISM=false CUDA_VISIBLE_DEVICES=0 torchrun --nnodes=1 --nproc_per_node=1 inference_t2m.py --ckpt ./Pretrain/checkpoint_ldmol_chebi20.pt --cfg-scale=3.5
+       TOKENIZERS_PARALLELISM=false CUDA_VISIBLE_DEVICES=0 torchrun --nnodes=1 --nproc_per_node=1 inference_t2m.py --ckpt ./Pretrain/checkpoint_ldmol.pt --cfg-scale=3.5
        ```
 
 __2. molecule-to-text retrieval__
