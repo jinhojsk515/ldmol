@@ -5,16 +5,15 @@ The details can be found in the following paper:
 
 *LDMol: Text-Conditioned Molecule Diffusion Model Leveraging Chemically Informative Latent Space. ([arxiv 2024](https://arxiv.org/abs/2405.17829))*
 
-![ldmol_fig2](https://github.com/jinhojsk515/LDMol/assets/59189526/1a172fed-39ab-44a6-848b-1740c7b37df4)
+![fig1](https://github.com/user-attachments/assets/dcc57a9a-83ed-4057-acab-5b7da4e0dccc)
 
-***
-
-![ldmol_fig3](https://github.com/jinhojsk515/LDMol/assets/59189526/8e590298-eb8a-4c38-bf84-22bcc0208ac4)
+![fig2](https://github.com/user-attachments/assets/f3f984db-be2a-47a1-897f-d058ce486c0a)
 
 LDMol not only can generate molecules according to the given text prompt, but it's also able to perform various downstream tasks including molecule-to-text retrieval and text-guided molecule editing.
 
 ***<ins>The model checkpoint and data are too heavy to be included in this repo and can be found in [here](https://drive.google.com/drive/folders/170znWA5u3nC7S1mzF7RPNP5faAn56Q45?usp=sharing).<ins>***
 
+***
 
 ## Requirements
 Run `conda env create -f requirements.yaml` and it will generate a conda environment named `ldmol`.
