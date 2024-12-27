@@ -5,9 +5,9 @@ The details can be found in the following paper:
 
 *LDMol: Text-Conditioned Molecule Diffusion Model Leveraging Chemically Informative Latent Space. ([arxiv 2024](https://arxiv.org/abs/2405.17829))*
 
-![fig1](https://github.com/user-attachments/assets/dcc57a9a-83ed-4057-acab-5b7da4e0dccc)
+![fig1](https://github.com/user-attachments/assets/dcfe5b56-ae1b-4f25-9181-66f081994f71)
 
-![fig2](https://github.com/user-attachments/assets/f3f984db-be2a-47a1-897f-d058ce486c0a)
+![ldmol_fig3 (2)](https://github.com/user-attachments/assets/00c41ec0-cdd1-48fe-8a71-37310c14f38d)
 
 LDMol not only can generate molecules according to the given text prompt, but it's also able to perform various downstream tasks including molecule-to-text retrieval and text-guided molecule editing.
 
