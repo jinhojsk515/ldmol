@@ -15,6 +15,7 @@ import random
 from torch.utils.data import DataLoader
 from pysmilesutils.augment import MolAugmenter
 from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
+from utils import regexTokenizer
 
 
 class AttrDict(dict):
