@@ -100,12 +100,17 @@ class ldmol_autoencoder(pl.LightningModule):
         scheduler = self.lr_schedulers()
         optimizer.zero_grad()
         text = train_batch
-        text_input = self.tokenizer(text, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        # text_input = self.tokenizer(text, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        text_input_ids = self.tokenizer(text, truncation='longest').to(self.device)
+        text_attention_mask = torch.where(text_input_ids == 0, 0, 1).to(self.device)
+        
         # text2 = ['[CLS]' + Chem.MolToSmiles(self.aug([Chem.MolFromSmiles(t[5:])])[0], canonical=False, isomericSmiles=True) if random.random()<0.1 else t for t in text]
         text2 = text
-        text_input2 = self.tokenizer(text2, padding='max_length', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        # text_input2 = self.tokenizer(text2, padding='max_length', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        text2_input_ids = self.tokenizer(text2, truncation='longest').to(self.device)
+        text2_attention_mask = torch.where(text2_input_ids == 0, 0, 1).to(self.device)
 
-        loss_mlm = self(text_input.input_ids[:, 1:], text_input.attention_mask[:, 1:], text_input2.input_ids[:, 1:], text_input2.attention_mask[:, 1:])
+        loss_mlm = self(text_input_ids, text_attention_mask, text2_input_ids, text2_attention_mask)
         loss = loss_mlm
         if loss != torch.tensor(0.):
             self.manual_backward(loss)
