@@ -265,20 +265,30 @@ class regexTokenizer():
     def __len__(self):
         return self.vocab_size
 
-    def __call__(self,smis:list):
+    def __call__(self,smis:list, truncation='max_len'):
         tensors = []
+        lengths = []
         if type(smis) is str:
             smis = [smis]
         for i in smis:
-            tensors.append(self.encode_one(i))
-        return torch.concat(tensors,dim=0)
+            length, tensor = self.encode_one(i)
+            tensors.append(tensor)
+            lengths.append(length)
+        output = torch.concat(tensors,dim=0)
+        if truncation == 'max_len':
+            return output
+        elif truncation == 'longest':
+            return output[:, :max(lengths)]
+        else:
+            raise ValueError('truncation should be either max_len or longest')
 
     def encode_one(self, smi):
         smi = '[CLS]' + smi + '[SEP]'
         res = [self.toktoid[i] for i in self.rg.findall(smi)]
-        if len(res) < self.max_len:
+        token_length = len(res)
+        if token_length < self.max_len:
             res += [self.pad_token_id]*(self.max_len-len(res))
         else:
             res = res[:self.max_len]
             # res[-1] = self.sep_token_id
-        return torch.LongTensor([res])
+        return token_length, torch.LongTensor([res])
