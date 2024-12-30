@@ -7,7 +7,7 @@ from tqdm import tqdm
 import argparse
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import molT5_encoder, AE_SMILES_encoder
+from utils import molT5_encoder, AE_SMILES_encoder, regexTokenizer
 import time
 from dataset import smi_txt_dataset
 from torch.utils.data import DataLoader
