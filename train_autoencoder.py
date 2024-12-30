@@ -13,6 +13,7 @@ from pytorch_lightning.strategies import DDPStrategy
 import torch.distributed
 import argparse
 from pathlib import Path
+from utils import regexTokenizer
 
 
 class AttrDict(dict):
