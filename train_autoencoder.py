@@ -13,7 +13,6 @@ from pytorch_lightning.strategies import DDPStrategy
 import torch.distributed
 import argparse
 from pathlib import Path
-from transformers import BertTokenizer, WordpieceTokenizer
 
 
 class AttrDict(dict):
@@ -140,8 +139,7 @@ def main(args, config):
     dataset = SMILESDataset_pretrain(args.data_path, data_length=[0, 10000000], is_train=False, shuffle=True)
     print('#data:', len(dataset))
     data_loader = DataLoader(dataset, batch_size=config['batch_size'], num_workers=8, shuffle=False, pin_memory=True, drop_last=True)
-    tokenizer = BertTokenizer(vocab_file=args.vocab_filename, do_lower_case=False, do_basic_tokenize=False)
-    tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=9999)
+    tokenizer = regexTokenizer(vocab_path=args.vocab_filename, max_len=127)#newtkn
 
     # model
     print("Creating model")
