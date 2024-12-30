@@ -9,7 +9,7 @@ import argparse
 from einops import repeat
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import AE_SMILES_decoder, molT5_encoder, get_validity
+from utils import AE_SMILES_decoder, molT5_encoder, get_validity, regexTokenizer
 import time
 from rdkit import Chem
 
