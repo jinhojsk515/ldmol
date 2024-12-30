@@ -180,11 +180,16 @@ class ldmol_encoder(pl.LightningModule):
                 print('err', t)
                 continue
 
-        text_input1 = self.tokenizer(text1, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(self.device)
-        text_input2 = self.tokenizer(text2, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        # text_input1 = self.tokenizer(text1, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        # text_input2 = self.tokenizer(text2, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(self.device)
+        text_input_ids = self.tokenizer(text1, truncation='longest').to(self.device)
+        text_attention_mask = torch.where(text_input_ids == 0, 0, 1).to(self.device)
+        text2_input_ids = self.tokenizer(text2, truncation='longest').to(self.device)
+        text2_attention_mask = torch.where(text_input_ids == 0, 0, 1).to(self.device)
         alpha = self.config['alpha'] if self.current_epoch > 0 else self.config['alpha'] * min(1., batch_idx / self.loader_len)
 
-        loss = self(text_input1.input_ids[:, 1:], text_input1.attention_mask[:, 1:], text_input2.input_ids[:, 1:], text_input2.attention_mask[:, 1:], alpha=alpha)
+        # loss = self(text_input1.input_ids[:, 1:], text_input1.attention_mask[:, 1:], text_input2.input_ids[:, 1:], text_input2.attention_mask[:, 1:], alpha=alpha)
+        loss = self(text_input_ids, text_attention_mask, text2_input_ids, text2_attention_mask, alpha=alpha)
         if loss != torch.tensor(0.):
             self.manual_backward(loss)
             torch.nn.utils.clip_grad_norm_(self.parameters(), 5.)
@@ -299,11 +304,18 @@ def evaluate(args, config):
         print(text1_combined)
         text1 = ['[CLS]' + t for t in text1_combined]
         text2 = ['[CLS]' + Chem.MolToSmiles(model.aug([Chem.MolFromSmiles(t[5:])])[0], canonical=False, isomericSmiles=True) for t in text1]
-        text_input1 = model.tokenizer(text1, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(model.device)
-        text_input2 = model.tokenizer(text2, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(model.device)
-        text1_embeds = model.text_encoder(text_input1.input_ids[:, 1:], attention_mask=text_input1.attention_mask[:, 1:], return_dict=True).last_hidden_state
+        # text_input1 = model.tokenizer(text1, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(model.device)
+        # text_input2 = model.tokenizer(text2, padding='longest', truncation=True, max_length=128, return_tensors="pt").to(model.device)
+        text_input_ids = model.tokenizer(text1, truncation='longest').to(self.device)
+        text_attention_mask = torch.where(text_input_ids == 0, 0, 1).to(self.device)
+        text2_input_ids = model.tokenizer(text2, truncation='longest').to(self.device)
+        text2_attention_mask = torch.where(text_input_ids == 0, 0, 1).to(self.device)
+        
+        # text1_embeds = model.text_encoder(text_input1.input_ids[:, 1:], attention_mask=text_input1.attention_mask[:, 1:], return_dict=True).last_hidden_state
+        text1_embeds = model.text_encoder(text_input_ids, attention_mask=text_attention_mask, return_dict=True).last_hidden_state
         text1_feat = F.normalize(model.text_proj(text1_embeds[:, 0, :]), dim=-1)
-        text2_embeds = model.text_encoder(text_input2.input_ids[:, 1:], attention_mask=text_input2.attention_mask[:, 1:], return_dict=True).last_hidden_state
+        # text2_embeds = model.text_encoder(text_input2.input_ids[:, 1:], attention_mask=text_input2.attention_mask[:, 1:], return_dict=True).last_hidden_state
+        text2_embeds = model.text_encoder(text2_input_ids, attention_mask=text2_attention_mask, return_dict=True).last_hidden_state
         text2_feat = F.normalize(model.text_proj(text2_embeds[:, 0, :]), dim=-1)
         sim = text1_feat @ text2_feat.T
         print(sim)
