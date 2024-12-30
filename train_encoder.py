@@ -8,7 +8,6 @@ import pytorch_lightning as pl
 from scheduler import create_scheduler
 import argparse
 from pathlib import Path
-from transformers import BertTokenizer, WordpieceTokenizer
 from dataset import SMILESDataset_pretrain
 from pytorch_lightning.strategies import DDPStrategy
 from rdkit import Chem
@@ -232,8 +231,7 @@ def main(args, config):
     dataset = SMILESDataset_pretrain(args.data_path, data_length=[0, 10000000])
     print('#data:', len(dataset))
     data_loader = DataLoader(dataset, batch_size=config['batch_size'], num_workers=16, shuffle=False, pin_memory=True, drop_last=True)
-    tokenizer = BertTokenizer(vocab_file=args.vocab_filename, do_lower_case=False, do_basic_tokenize=False)
-    tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
+    tokenizer = regexTokenizer(vocab_path=args.vocab_filename, max_len=127)#newtkn
 
     # model
     print("Creating model")
@@ -270,8 +268,7 @@ def evaluate(args, config):
     dataset = SMILESDataset_pretrain(args.data_path, data_length=[0, 10], is_train=False)
     print('#data:', len(dataset))
     data_loader = DataLoader(dataset, batch_size=config['batch_size'], num_workers=8, shuffle=True, pin_memory=True, drop_last=False)
-    tokenizer = BertTokenizer(vocab_file=args.vocab_filename, do_lower_case=False, do_basic_tokenize=False)
-    tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=250)
+    tokenizer = regexTokenizer(vocab_path=args.vocab_filename, max_len=127)#newtkn
 
     # model
     print("Creating model")
