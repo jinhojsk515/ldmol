@@ -10,11 +10,10 @@ RDLogger.DisableLog('rdApp.*')
 
 @torch.no_grad()
 def AE_SMILES_encoder(sm, ae_model):
-    if sm[0][:5] != "[CLS]":
-        sm = ["[CLS]"+s for s in sm]
-    text_input = ae_model.tokenizer(sm, padding='max_length', truncation=True, max_length=128, return_tensors="pt").to(ae_model.device)
-    text_input_ids = text_input['input_ids'][:, 1:]
-    text_attention_mask = text_input['attention_mask'][:, 1:]
+    if sm[0][:5] == "[CLS]":    sm = [s[5:] for s in sm]
+    text_input = ae_model.tokenizer(sm).to(ae_model.device)
+    text_input_ids = text_input
+    text_attention_mask = torch.where(text_input_ids == 0, 0, 1).to(text_input.device)
     if hasattr(ae_model.text_encoder2, 'bert'):
         output = ae_model.text_encoder2.bert(text_input_ids, attention_mask=text_attention_mask, return_dict=True, mode='text').last_hidden_state
     else:
@@ -76,11 +75,11 @@ def AE_SMILES_decoder(pv, model, stochastic=False, k=2, max_length=150):
             output = generate(model, pv, text_input, stochastic=False)
             if output.sum() == 0:
                 break
+            
             text_input = torch.cat([text_input, output], dim=-1)
         for i in range(text_input.size(0)):
             sentence = text_input[i]
-            if tokenizer.sep_token_id in sentence: sentence = sentence[:(sentence == tokenizer.sep_token_id).nonzero(as_tuple=True)[0][0].item()]
-            cdd = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(sentence)).replace(' ', '').replace('[CLS]', '')
+            cdd = tokenizer.decode(sentence)[0]#newtkn
             candidate.append(cdd)
     else:
         for prop_embeds in pv:
@@ -109,7 +108,7 @@ def AE_SMILES_decoder(pv, model, stochastic=False, k=2, max_length=150):
             candidate_k = []
             final_output = sorted(final_output, key=lambda x: x[0], reverse=True)[:k]
             for p, sentence in final_output:
-                cdd = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(sentence[:-1])).replace('[CLS]', '')
+                cdd = tokenizer.decode(sentence[:-1])[0]#newtkn
                 candidate_k.append(cdd)
             if candidate_k == []:
                 candidate.append("")
@@ -231,3 +230,55 @@ def drawRoundRec(draw, color, x, y, w, h, r):
     '''rec.s'''
     drawObject.rectangle((x + r / 2, y, x + w - (r / 2), y + h), fill=color)
     drawObject.rectangle((x, y + r / 2, x + w, y + h - (r / 2)), fill=color)
+
+class regexTokenizer():
+    def __init__(self,vocab_path='./vocab_bpe_300_sc.txt',max_len=127):
+        with open(vocab_path,'r') as f:
+            x = f.readlines()
+            x = [xx.replace('##', '') for xx in x]
+            x2 = x.copy()
+        x2.sort(key=len, reverse=True)
+        pattern = "("+"|".join(re.escape(token).strip()[:-1] for token in x2)+")"
+        self.rg = re.compile(pattern)
+
+        self.idtotok  = { cnt:i.strip() for cnt,i in enumerate(x)}
+        self.vocab_size = len(self.idtotok) #SOS, EOS, pad
+        self.toktoid = { v:k for k,v in self.idtotok.items()}
+        self.max_len = max_len
+        self.cls_token_id = self.toktoid['[CLS]']
+        self.sep_token_id = self.toktoid['[SEP]']
+        self.pad_token_id = self.toktoid['[PAD]']
+
+    def decode_one(self, iter):
+        if self.sep_token_id in iter:   iter = iter[:(iter == self.sep_token_id).nonzero(as_tuple=True)[0][0].item()]
+        # return "".join([self.ind2Letter(i) for i in iter]).replace('[SOS]','').replace('[EOS]','').replace('[PAD]','')
+        return "".join([self.idtotok[i.item()] for i in iter[1:]])
+
+    def decode(self,ids:torch.tensor):
+        if len(ids.shape)==1:
+            return [self.decode_one(ids)]
+        else:
+            smiles  = []
+            for i in ids:
+                smiles.append(self.decode_one(i))
+            return smiles
+    def __len__(self):
+        return self.vocab_size
+
+    def __call__(self,smis:list):
+        tensors = []
+        if type(smis) is str:
+            smis = [smis]
+        for i in smis:
+            tensors.append(self.encode_one(i))
+        return torch.concat(tensors,dim=0)
+
+    def encode_one(self, smi):
+        smi = '[CLS]' + smi + '[SEP]'
+        res = [self.toktoid[i] for i in self.rg.findall(smi)]
+        if len(res) < self.max_len:
+            res += [self.pad_token_id]*(self.max_len-len(res))
+        else:
+            res = res[:self.max_len]
+            # res[-1] = self.sep_token_id
+        return torch.LongTensor([res])
