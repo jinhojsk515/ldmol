@@ -8,7 +8,7 @@ import argparse
 from einops import repeat
 from transformers import T5ForConditionalGeneration, T5Tokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import AE_SMILES_decoder, molT5_encoder
+from utils import AE_SMILES_decoder, molT5_encoder, regexTokenizer
 import time
 from dataset import smi_txt_dataset
 from torch.utils.data import DataLoader
