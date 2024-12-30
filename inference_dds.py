@@ -4,9 +4,9 @@ from models import DiT_models
 from download import find_model
 from diffusion import create_diffusion
 import argparse
-from transformers import T5ForConditionalGeneration, T5Tokenizer, BertTokenizer, WordpieceTokenizer
+from transformers import T5ForConditionalGeneration, T5Tokenizer
 from train_autoencoder import ldmol_autoencoder
-from utils import AE_SMILES_decoder, molT5_encoder, AE_SMILES_encoder
+from utils import AE_SMILES_decoder, molT5_encoder, AE_SMILES_encoder, regexTokenizer
 from rdkit import Chem
 import time
 import random
@@ -57,8 +57,9 @@ def main(args):
         'bert_config_encoder': './config_encoder.json',
         'embed_dim': 256,
     }
-    tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
-    tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
+    # tokenizer = BertTokenizer(vocab_file='./vocab_bpe_300_sc.txt', do_lower_case=False, do_basic_tokenize=False)
+    # tokenizer.wordpiece_tokenizer = WordpieceTokenizer(vocab=tokenizer.vocab, unk_token=tokenizer.unk_token, max_input_chars_per_word=1000)
+    tokenizer = regexTokenizer(vocab_path='./vocab_bpe_300_sc.txt', max_len=127)#newtkn
     ae_model = ldmol_autoencoder(config=ae_config, no_train=True, tokenizer=tokenizer)
     if args.vae:
         checkpoint = torch.load(args.vae, map_location='cpu')
